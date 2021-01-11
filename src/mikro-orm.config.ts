@@ -1,7 +1,7 @@
-import { prod } from "./constants";
-import { Post } from "./entities/Post";
 import { MikroORM } from '@mikro-orm/core';
 import path from 'path';
+import { prod } from "./constants";
+import { Post } from "./entities/Post";
 
 export default {
   dbName: 'lireddit',
