@@ -4,13 +4,14 @@ import express from 'express';
 import redis from 'redis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
+import cors from 'cors';
 import { buildSchema } from 'type-graphql';
 import { ApolloServer } from 'apollo-server-express';
 import microConfig from './mikro-orm.config';
 import { Context } from './types';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
-import { prod } from './constants';
+import { LOCAL_DEV_ROUTE, prod } from './constants';
 
 const main = async () => {
   // Auto run migrations
@@ -27,6 +28,15 @@ const main = async () => {
   // Redis store connection
   const RedisStore = connectRedis(session);
   const redisClient = redis.createClient();
+
+  // Accept CORS on local requests
+  const CORS_SETTINGS = {
+    origin: LOCAL_DEV_ROUTE,
+    credentials: true,
+  };
+
+  app.use(cors(CORS_SETTINGS));
+  
   app.use(session({
     name: 'sid',
     // Disable touch reduces the number of requests to Redis
@@ -53,7 +63,11 @@ const main = async () => {
     }),
     context: ({ req, res }): Context => ({ em: orm.em, req, res }),
   });
-  apolloServer.applyMiddleware({ app });
+  apolloServer.applyMiddleware({
+    app,
+    // Inject CORS SETTINGS into Apollo route as well (not really needed, as CORS is global defiined, above)
+    cors: CORS_SETTINGS,
+  });
 };
 
 main();
