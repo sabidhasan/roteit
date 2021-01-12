@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import { UserResponse, UserCredentials } from '../dto/user.dto';
-import { Arg, Ctx, Mutation, Resolver } from 'type-graphql';
+import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { SALT_ROUNDS } from '../constants';
 import { User } from '../entities/User';
 import { Context } from '../types';
@@ -29,6 +29,9 @@ export class UserResolver {
         errors: [{ field: 'username', message: `other error ${err.detail}` }],
       };
     }
+
+    // Set the cookie in express-session to start user session
+    ctx.req.session.userId = user.id;
     return { user };
   }
 
@@ -53,6 +56,8 @@ export class UserResolver {
       };
     }
 
+    // Set the cookie in express-session to keep user session alive
+    ctx.req.session.userId = user.id;
     return { user };
   }
 }

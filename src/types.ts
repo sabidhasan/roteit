@@ -1,5 +1,15 @@
 import { EntityManager, IDatabaseDriver, Connection } from "@mikro-orm/core";
+import { Request, Response } from 'express';
 
 export type Context = {
-  em: EntityManager<any> & EntityManager<IDatabaseDriver<Connection>>
+  em: EntityManager<any> & EntityManager<IDatabaseDriver<Connection>>,
+  req: Request,
+  res: Response,
+}
+
+declare module "express-session" {
+  interface Session {
+    // extend session object in `Request` middleware
+    userId: number;
+  }
 }
