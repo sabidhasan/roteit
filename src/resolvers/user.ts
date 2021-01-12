@@ -8,6 +8,21 @@ import { Context } from '../types';
 
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async me(@Ctx() ctx: Context) {
+    // Check if there is a user id in session cookie
+    if (!ctx.req.session.userId) {
+      return null;
+    }
+
+    // Get user from cookie
+    try {
+      return await ctx.em.findOne(User, { id: ctx.req.session.userId })
+    } catch {
+      return null;
+    }
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Ctx() ctx: Context,
