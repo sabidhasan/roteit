@@ -43,7 +43,7 @@ export class UserResolver {
     try {
       await ctx.em.persistAndFlush(user);
     } catch (err) {
-      if (err.detail.includes('') || err.code === '24505') {
+      if (err.detail?.includes('already exists') || err.code === '24505') {
         return { errors: [{ field: 'username', message: 'duplicate user detected' }] };
       }
 
