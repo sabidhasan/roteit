@@ -31,17 +31,27 @@ export class UserResolver {
     const { username, password } = credentials;
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const user = ctx.em.create(User, { username: username.toLowerCase(), password: hashedPassword });
+
+    if (username.length <= 2) {
+      return { errors: [{ field: 'username', message: 'username too short'}] };
+    }
+
+    if (password.length <= 3) {
+      return { errors: [{ field: 'password', message: 'password too short' }] };
+    }
+
     try {
       await ctx.em.persistAndFlush(user);
     } catch (err) {
       if (err.detail.includes('') || err.code === '24505') {
-        return {
-          errors: [{ field: 'username', message: 'duplicate user detected' }],
-        };
+        return { errors: [{ field: 'username', message: 'duplicate user detected' }] };
       }
 
       return {
-        errors: [{ field: 'username', message: `other error ${err.detail}` }],
+        errors: [
+          { field: 'username', message: `other error ${err.detail}` },
+          { field: 'password', message: `other error ${err.detail}` },
+        ],
       };
     }
 
