@@ -34,3 +34,6 @@ sudo redis-server
 ```
 
 Can interact with Redis using the `redis-cli`, if necessary.
+
+# Error Handling
+For consistency, errors are returned in a `FieldError` DTO, rather than using `class-validator`. To use class-validator instead, decorate the DTOs with class-validator decorators as necessary, and then set `validate: true` from `validate: false` where the ApolloServer is instantiated in `index.ts`.
