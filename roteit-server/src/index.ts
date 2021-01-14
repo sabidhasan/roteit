@@ -11,7 +11,7 @@ import microConfig from './mikro-orm.config';
 import { Context } from './types';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
-import { LOCAL_DEV_ROUTE, prod } from './constants';
+import { LOCAL_DEV_ROUTE, prod, SESSION_COOKIE } from './constants';
 
 const main = async () => {
   // Auto run migrations
@@ -38,7 +38,7 @@ const main = async () => {
   app.use(cors(CORS_SETTINGS));
   
   app.use(session({
-    name: 'sid',
+    name: SESSION_COOKIE,
     // Disable touch reduces the number of requests to Redis
     store: new RedisStore({ client: redisClient, disableTouch: true }),
     secret: 'my secret',

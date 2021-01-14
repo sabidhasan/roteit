@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { UserResponse, UserCredentials } from '../dto/user.dto';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
-import { SALT_ROUNDS } from '../constants';
+import { SALT_ROUNDS, SESSION_COOKIE } from '../constants';
 import { User } from '../entities/User';
 import { Context } from '../types';
 
@@ -84,5 +84,19 @@ export class UserResolver {
     // Set the cookie in express-session to keep user session alive
     ctx.req.session.userId = user.id;
     return { user };
+  }
+
+  @Mutation(() => Boolean)
+  logout(@Ctx() ctx: Context) {
+    return new Promise((resolve) => {
+      ctx.req.session.destroy((err) => {
+        ctx.res.clearCookie(SESSION_COOKIE);
+
+        if (!err) {
+          return resolve(true);
+        }
+        resolve(false);
+      });
+    });
   }
 }

@@ -8,7 +8,7 @@ interface Props {}
 
 export const Navbar: React.FC<Props> = () => {
   const [{ fetching, data, error }] = useMeQuery({ requestPolicy: 'network-only' });
-  const [, logout] = useLogoutMutation();
+  const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
 
 
   let body: React.ReactNode;
@@ -18,7 +18,13 @@ export const Navbar: React.FC<Props> = () => {
     body = (
       <Flex>
         <Box marginRight={5}>{data.me.username}</Box>
-        <Button variant="link" onClick={() => logout()}>Log Out</Button>
+        <Button
+          variant="link"
+          onClick={() => logout()}
+          isLoading={logoutFetching}
+        >
+          Log Out
+        </Button>
       </Flex>
     )
   } else if (fetching) {
