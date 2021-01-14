@@ -2,12 +2,16 @@ import React from 'react';
 import { Box, Button, Flex, Link } from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { loginPath, registerPath } from '../paths';
+import { isClientSide } from '../utils/isClientSide';
 import { useMeQuery, useLogoutMutation } from '../generated/graphql'
 
 interface Props {}
 
 export const Navbar: React.FC<Props> = () => {
-  const [{ fetching, data, error }] = useMeQuery({ requestPolicy: 'network-only' });
+  const [{ fetching, data, error }] = useMeQuery({
+    requestPolicy: 'network-only',
+    pause: isClientSide(),
+  });
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
 
 
