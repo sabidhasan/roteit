@@ -1,10 +1,11 @@
 import bcrypt from 'bcrypt';
-import { UserResponse, UserCredentials } from '../dto/user.dto';
+import validator from 'email-validator';
+import { UserResponseDto, UserCredentialsDto, UserCreateDto } from '../dto/user.dto';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
 import { SALT_ROUNDS, SESSION_COOKIE } from '../constants';
 import { User } from '../entities/User';
 import { Context } from '../types';
-
+import { validateCredentials } from '../utils/validateCredentials';
 
 @Resolver()
 export class UserResolver {
@@ -23,22 +24,25 @@ export class UserResolver {
     }
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(() => UserResponseDto)
   async register(
     @Ctx() ctx: Context,
-    @Arg('input') credentials: UserCredentials,
-  ): Promise<UserResponse> {
-    const { username, password } = credentials;
+    @Arg('input') credentials: UserCredentialsDto,
+  ): Promise<UserResponseDto> {
+    const errors = validateCredentials(credentials);
+    if (errors) {
+      return { errors };
+    }
+
+    const { username, password, email } = credentials;
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = ctx.em.create(User, { username: username.toLowerCase(), password: hashedPassword });
 
-    if (username.length <= 2) {
-      return { errors: [{ field: 'username', message: 'username too short'}] };
-    }
+    const user = ctx.em.create(User, {
+      username: username.toLowerCase(),
+      password: hashedPassword,
+      email,
+    });
 
-    if (password.length <= 3) {
-      return { errors: [{ field: 'password', message: 'password too short' }] };
-    }
 
     try {
       await ctx.em.persistAndFlush(user);
@@ -50,7 +54,6 @@ export class UserResolver {
       return {
         errors: [
           { field: 'username', message: `other error ${err.detail}` },
-          { field: 'password', message: `other error ${err.detail}` },
         ],
       };
     }
@@ -60,25 +63,25 @@ export class UserResolver {
     return { user };
   }
 
-  @Mutation(() => UserResponse)
+  @Mutation(() => UserResponseDto)
   async login(
     @Ctx() ctx: Context,
-    @Arg('input') credentials: UserCredentials,
-  ): Promise<UserResponse> {
+    @Arg('input') credentials: UserCreateDto,
+  ): Promise<UserResponseDto> {
     let user: User;
 
     try {
-      user = await ctx.em.findOneOrFail(User, { username: credentials.username.toLowerCase() });
+      if (validator.validate(credentials.emailOrUsername)) {
+        user = await ctx.em.findOneOrFail(User, { email: credentials.emailOrUsername.toLowerCase() });
+      } else {
+        user = await ctx.em.findOneOrFail(User, { username: credentials.emailOrUsername.toLowerCase() });
+      }
     } catch {
-      return {
-        errors: [{ field: 'username', message: 'could not find user' }],
-      };
+      return { errors: [{ field: 'emailOrUsername', message: 'could not find user' }] };
     }
 
     if (!(await bcrypt.compare(credentials.password, user.password))) {
-      return {
-        errors: [{ field: 'password', message: 'invalid login' }],
-      };
+      return { errors: [{ field: 'password', message: 'invalid login' }] };
     }
 
     // Set the cookie in express-session to keep user session alive

@@ -17,7 +17,7 @@ const main = async () => {
   // Auto run migrations
   const orm = await MikroORM.init(microConfig);
   const migrationsRan = await orm.getMigrator().up();
-  console.log(`Ran ${migrationsRan.length} total migrations!`);
+  console.log(`Ran ${migrationsRan.length} total migration(s)!`);
 
   // Create Express app, to connect to Graphql
   const app = express();
@@ -70,4 +70,4 @@ const main = async () => {
   });
 };
 
-main();
+main().catch(console.error);

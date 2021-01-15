@@ -4,7 +4,10 @@ import { User } from '../entities/User';
 import { FieldError } from './error.dto';
 
 @InputType()
-export class UserCredentials {
+export class UserCredentialsDto {
+  @Field()
+  email: string;
+
   @Field()
   username: string;
 
@@ -13,8 +16,19 @@ export class UserCredentials {
   password: string;
 }
 
+@InputType()
+export class UserCreateDto {
+  @Field()
+  emailOrUsername: string;
+
+  @IsString()
+  @Field()
+  password: string;
+}
+
+
 @ObjectType()
-export class UserResponse {
+export class UserResponseDto {
   @Field(() => [FieldError], { nullable: true })
   errors?: FieldError[];
 
