@@ -42,6 +42,7 @@ export type User = {
   createdAt: Scalars['DateTime'];
   updatedAt: Scalars['DateTime'];
   username: Scalars['String'];
+  email: Scalars['String'];
 };
 
 
@@ -50,8 +51,8 @@ export type Mutation = {
   createPost: Post;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
-  register: UserResponse;
-  login: UserResponse;
+  register: UserResponseDto;
+  login: UserResponseDto;
   logout: Scalars['Boolean'];
 };
 
@@ -73,16 +74,16 @@ export type MutationDeletePostArgs = {
 
 
 export type MutationRegisterArgs = {
-  input: UserCredentials;
+  input: UserCredentialsDto;
 };
 
 
 export type MutationLoginArgs = {
-  input: UserCredentials;
+  input: UserCreateDto;
 };
 
-export type UserResponse = {
-  __typename?: 'UserResponse';
+export type UserResponseDto = {
+  __typename?: 'UserResponseDto';
   errors?: Maybe<Array<FieldError>>;
   user?: Maybe<User>;
 };
@@ -93,8 +94,14 @@ export type FieldError = {
   message: Scalars['String'];
 };
 
-export type UserCredentials = {
+export type UserCredentialsDto = {
+  email: Scalars['String'];
   username: Scalars['String'];
+  password: Scalars['String'];
+};
+
+export type UserCreateDto = {
+  emailOrUsername: Scalars['String'];
   password: Scalars['String'];
 };
 
@@ -104,15 +111,14 @@ export type RegularUserFragment = (
 );
 
 export type LoginMutationVariables = Exact<{
-  username: Scalars['String'];
-  password: Scalars['String'];
+  input: UserCreateDto;
 }>;
 
 
 export type LoginMutation = (
   { __typename?: 'Mutation' }
   & { login: (
-    { __typename?: 'UserResponse' }
+    { __typename?: 'UserResponseDto' }
     & { user?: Maybe<(
       { __typename?: 'User' }
       & RegularUserFragment
@@ -132,15 +138,14 @@ export type LogoutMutation = (
 );
 
 export type RegisterMutationVariables = Exact<{
-  username: Scalars['String'];
-  password: Scalars['String'];
+  input: UserCredentialsDto;
 }>;
 
 
 export type RegisterMutation = (
   { __typename?: 'Mutation' }
   & { register: (
-    { __typename?: 'UserResponse' }
+    { __typename?: 'UserResponseDto' }
     & { user?: Maybe<(
       { __typename?: 'User' }
       & RegularUserFragment
@@ -180,8 +185,8 @@ export const RegularUserFragmentDoc = gql`
 }
     `;
 export const LoginDocument = gql`
-    mutation Login($username: String!, $password: String!) {
-  login(input: {username: $username, password: $password}) {
+    mutation Login($input: UserCreateDto!) {
+  login(input: $input) {
     user {
       ...RegularUser
     }
@@ -206,8 +211,8 @@ export function useLogoutMutation() {
   return Urql.useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument);
 };
 export const RegisterDocument = gql`
-    mutation Register($username: String!, $password: String!) {
-  register(input: {username: $username, password: $password}) {
+    mutation Register($input: UserCredentialsDto!) {
+  register(input: $input) {
     user {
       ...RegularUser
     }

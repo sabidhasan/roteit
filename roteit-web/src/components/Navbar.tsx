@@ -8,15 +8,15 @@ import { useMeQuery, useLogoutMutation } from '../generated/graphql'
 interface Props {}
 
 export const Navbar: React.FC<Props> = () => {
-  const [{ fetching, data, error }] = useMeQuery({
+  const [{ fetching, data }] = useMeQuery({
     requestPolicy: 'network-only',
-    pause: isClientSide(),
+    pause: false,
   });
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
 
-
   let body: React.ReactNode;
 
+  console.log('data', data)
   if (data?.me) {
     // User logged in
     body = (
