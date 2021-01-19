@@ -1,11 +1,13 @@
+import { v4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import validator from 'email-validator';
 import { UserResponseDto, UserCredentialsDto, UserCreateDto } from '../dto/user.dto';
 import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
-import { SALT_ROUNDS, SESSION_COOKIE } from '../constants';
+import { PASSWORD_RESET_PREFIX, SALT_ROUNDS, SESSION_COOKIE } from '../constants';
 import { User } from '../entities/User';
 import { Context } from '../types';
-import { validateCredentials } from '../utils/validateCredentials';
+import { passwordIsValid, validateCredentials } from '../utils/validateCredentials';
+import { EmailService } from '../utils/emailService';
 
 @Resolver()
 export class UserResolver {
@@ -101,5 +103,78 @@ export class UserResolver {
         resolve(false);
       });
     });
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Arg('email') email: string,
+    @Ctx() ctx: Context,
+  ) {
+    // Check if user exists, and email is valid
+    const user = await ctx.em.findOne(User, { email });
+    if (!user || !validator.validate(email)) {
+      return true;
+    }
+
+    const token = v4();
+    // Token expiry for Redis
+    const ONE_HOUR_IN_MS = 1000 * 60 * 60;
+    ctx.redisClient.set(`${PASSWORD_RESET_PREFIX}${token}`, user.id.toString(), 'EX', ONE_HOUR_IN_MS);
+
+
+    const message = `<a href="http://localhost:3000/reset-password/${token}">Reset your password</a>`;
+    try {
+      await EmailService.sendEmail(email, message);
+    } catch (err) {
+      console.error(`Could not send email for token ${message}`, err);
+    }
+
+    return true; 
+  }
+
+  @Mutation(() => UserResponseDto)
+  async updatePassword(
+    @Arg('newPassword') newPassword: string,
+    @Arg('token') token: string,
+    @Ctx() ctx: Context
+  ): Promise<UserResponseDto> {
+    if (!passwordIsValid(newPassword)) {
+      return { errors: [{ field: 'password', message: 'Password too short' }] };
+    }
+
+    // Check if token is valid, and if so get user
+    let tokenValueFromRedis: string | null;
+    const redisKey = `${PASSWORD_RESET_PREFIX}${token}`;
+
+    try {
+      tokenValueFromRedis = await new Promise((resolve, reject) => {
+        ctx.redisClient.get(redisKey, (err, reply) => {
+          // If error, reject promise, otherwise reply
+          return err ? reject(err) : resolve(reply);
+        });
+      });
+      
+      if (!tokenValueFromRedis) throw new Error();
+    } catch {
+      // Token not valid
+      return { errors: [{ field: 'token', message: 'Invalid or expired token' }] };
+    }
+
+    // Check if user exists
+    const user = await ctx.em.findOne(User, { id: Number(tokenValueFromRedis) });
+    if (!user) {
+      return { errors: [{ field: 'password', message: 'Invalid user' }] };
+    }
+
+    user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await ctx.em.persistAndFlush(user);
+    // Delete key in Redis
+    await new Promise((resolve) => {
+      ctx.redisClient.del(redisKey, resolve);
+    });
+
+    // Log in user
+    ctx.req.session.userId = user.id;
+    return { user };
   }
 }

@@ -53,7 +53,7 @@ const main = async () => {
       // CSRF
       sameSite: 'lax',
     }
-  }))
+  }));
 
   // GraphQL Apollo server
   const apolloServer = new ApolloServer({
@@ -61,7 +61,12 @@ const main = async () => {
       resolvers: [PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): Context => ({ em: orm.em, req, res }),
+    context: ({ req, res }): Context => ({
+      em: orm.em,
+      req,
+      res,
+      redisClient,
+    }),
   });
   apolloServer.applyMiddleware({
     app,
