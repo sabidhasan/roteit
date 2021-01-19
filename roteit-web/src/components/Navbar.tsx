@@ -10,13 +10,12 @@ interface Props {}
 export const Navbar: React.FC<Props> = () => {
   const [{ fetching, data }] = useMeQuery({
     requestPolicy: 'network-only',
-    pause: false,
+    pause: !isClientSide(),
   });
   const [{ fetching: logoutFetching }, logout] = useLogoutMutation();
 
   let body: React.ReactNode;
 
-  console.log('data', data)
   if (data?.me) {
     // User logged in
     body = (
