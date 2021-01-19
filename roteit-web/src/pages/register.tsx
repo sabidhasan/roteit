@@ -13,19 +13,19 @@ import { createUrqlClient } from '../utils/createUrqlClient';
 interface Props {}
 
 const Register: React.FC<Props> = () => {
-  const [{ fetching, data, error }, register] = useRegisterMutation();
+  const [, register] = useRegisterMutation();
   const router = useRouter();
 
   return (
-    <Wrapper>
+    <Wrapper type="small">
       <Formik
         initialValues={{ username: '', email: '', password: '' }}
         onSubmit={async (values, helpers) => {
           const response = await register({ input: values });
           const registerResponse = response.data?.register;
-          if (registerResponse.errors) {
-            helpers.setErrors(parseGQLErrors(registerResponse.errors));
-          } else if (registerResponse.user) {
+          if (registerResponse?.errors) {
+            helpers.setErrors(parseGQLErrors(registerResponse?.errors));
+          } else if (registerResponse?.user) {
             // Send user to home, as login was successful
             router.push(homePath);
           }
@@ -37,7 +37,7 @@ const Register: React.FC<Props> = () => {
               name="username"
               placeholder="Username"
               label="username"
-              style={{ marginBottom: '20  px' }}
+              style={{ marginBottom: '20px' }}
             />
             <InputField
               name="password"
@@ -54,7 +54,7 @@ const Register: React.FC<Props> = () => {
             <Button
               marginTop={5}
               type="submit"
-              colorScheme="sandybrown"
+              colorScheme="red"
               isLoading={isSubmitting}
             >
               Register

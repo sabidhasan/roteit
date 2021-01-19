@@ -1,31 +1,32 @@
 import React from 'react';
 import { Formik, Form } from 'formik';
-import { Button } from '@chakra-ui/react';
+import { Button, Flex, Link } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
+import NextLink from 'next/link';
 import Wrapper from '../components/Wrapper';
 import InputField from '../components/InputField';
 import { useLoginMutation } from '../generated/graphql';
 import { parseGQLErrors } from '../utils/parseGQLErrors';
-import { homePath } from '../paths';
+import { homePath, resetPasswordPath } from '../paths';
 import { withUrqlClient } from 'next-urql';
 import { createUrqlClient } from '../utils/createUrqlClient';
 
 interface Props { }
 
 const Login: React.FC<Props> = () => {
-  const [{ fetching, data, error }, login] = useLoginMutation();
+  const [, login] = useLoginMutation();
   const router = useRouter();
 
   return (
-    <Wrapper>
+    <Wrapper type="small">
       <Formik
         initialValues={{ emailOrUsername: '', password: '' }}
         onSubmit={async (values, helpers) => {
           const response = await login({ input: values });
           const registerResponse = response.data?.login;
-          if (registerResponse.errors) {
+          if (registerResponse?.errors) {
             helpers.setErrors(parseGQLErrors(registerResponse.errors));
-          } else if (registerResponse.user) {
+          } else if (registerResponse?.user) {
             // Send user to home, as login was successful
             router.push(homePath);
           }
@@ -37,7 +38,7 @@ const Login: React.FC<Props> = () => {
               name="emailOrUsername"
               placeholder="Email or Username"
               label="Email or Username"
-              style={{ marginBottom: '20  px' }}
+              style={{ marginBottom: '20px' }}
             />
             <InputField
               name="password"
@@ -45,10 +46,15 @@ const Login: React.FC<Props> = () => {
               label="Password"
               type="password"
             />
+            <Flex marginTop={4}>
+              <NextLink href={resetPasswordPath}>
+                <Link marginLeft="auto">Forgot Password?</Link>
+              </NextLink>
+            </Flex>
             <Button
               marginTop={5}
               type="submit"
-              colorScheme="sandybrown"
+              colorScheme="red"
               isLoading={isSubmitting}
             >
               Login
