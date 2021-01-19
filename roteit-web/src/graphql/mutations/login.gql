@@ -4,8 +4,7 @@ mutation Login($input: UserCreateDto!) {
       ...RegularUser
     },
     errors {
-      message,
-      field,
+      ...RegularError
     }
   }
 }

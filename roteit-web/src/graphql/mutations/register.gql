@@ -4,8 +4,7 @@ mutation Register($input: UserCredentialsDto!) {
       ...RegularUser
     },
     errors {
-      message,
-      field,
+      ...RegularError
     }
   }
 }

@@ -54,6 +54,8 @@ export type Mutation = {
   register: UserResponseDto;
   login: UserResponseDto;
   logout: Scalars['Boolean'];
+  forgotPassword: Scalars['Boolean'];
+  updatePassword: UserResponseDto;
 };
 
 
@@ -82,6 +84,17 @@ export type MutationLoginArgs = {
   input: UserCreateDto;
 };
 
+
+export type MutationForgotPasswordArgs = {
+  email: Scalars['String'];
+};
+
+
+export type MutationUpdatePasswordArgs = {
+  token: Scalars['String'];
+  newPassword: Scalars['String'];
+};
+
 export type UserResponseDto = {
   __typename?: 'UserResponseDto';
   errors?: Maybe<Array<FieldError>>;
@@ -105,9 +118,24 @@ export type UserCreateDto = {
   password: Scalars['String'];
 };
 
+export type RegularErrorFragment = (
+  { __typename?: 'FieldError' }
+  & Pick<FieldError, 'field' | 'message'>
+);
+
 export type RegularUserFragment = (
   { __typename?: 'User' }
   & Pick<User, 'id' | 'username'>
+);
+
+export type ForgotPasswordMutationVariables = Exact<{
+  email: Scalars['String'];
+}>;
+
+
+export type ForgotPasswordMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'forgotPassword'>
 );
 
 export type LoginMutationVariables = Exact<{
@@ -124,7 +152,7 @@ export type LoginMutation = (
       & RegularUserFragment
     )>, errors?: Maybe<Array<(
       { __typename?: 'FieldError' }
-      & Pick<FieldError, 'message' | 'field'>
+      & RegularErrorFragment
     )>> }
   ) }
 );
@@ -151,8 +179,28 @@ export type RegisterMutation = (
       & RegularUserFragment
     )>, errors?: Maybe<Array<(
       { __typename?: 'FieldError' }
-      & Pick<FieldError, 'message' | 'field'>
+      & RegularErrorFragment
     )>> }
+  ) }
+);
+
+export type UpdatePasswordMutationVariables = Exact<{
+  token: Scalars['String'];
+  newPassword: Scalars['String'];
+}>;
+
+
+export type UpdatePasswordMutation = (
+  { __typename?: 'Mutation' }
+  & { updatePassword: (
+    { __typename?: 'UserResponseDto' }
+    & { errors?: Maybe<Array<(
+      { __typename?: 'FieldError' }
+      & RegularErrorFragment
+    )>>, user?: Maybe<(
+      { __typename?: 'User' }
+      & RegularUserFragment
+    )> }
   ) }
 );
 
@@ -178,12 +226,27 @@ export type PostsQuery = (
   )> }
 );
 
+export const RegularErrorFragmentDoc = gql`
+    fragment RegularError on FieldError {
+  field
+  message
+}
+    `;
 export const RegularUserFragmentDoc = gql`
     fragment RegularUser on User {
   id
   username
 }
     `;
+export const ForgotPasswordDocument = gql`
+    mutation ForgotPassword($email: String!) {
+  forgotPassword(email: $email)
+}
+    `;
+
+export function useForgotPasswordMutation() {
+  return Urql.useMutation<ForgotPasswordMutation, ForgotPasswordMutationVariables>(ForgotPasswordDocument);
+};
 export const LoginDocument = gql`
     mutation Login($input: UserCreateDto!) {
   login(input: $input) {
@@ -191,12 +254,12 @@ export const LoginDocument = gql`
       ...RegularUser
     }
     errors {
-      message
-      field
+      ...RegularError
     }
   }
 }
-    ${RegularUserFragmentDoc}`;
+    ${RegularUserFragmentDoc}
+${RegularErrorFragmentDoc}`;
 
 export function useLoginMutation() {
   return Urql.useMutation<LoginMutation, LoginMutationVariables>(LoginDocument);
@@ -217,15 +280,32 @@ export const RegisterDocument = gql`
       ...RegularUser
     }
     errors {
-      message
-      field
+      ...RegularError
     }
   }
 }
-    ${RegularUserFragmentDoc}`;
+    ${RegularUserFragmentDoc}
+${RegularErrorFragmentDoc}`;
 
 export function useRegisterMutation() {
   return Urql.useMutation<RegisterMutation, RegisterMutationVariables>(RegisterDocument);
+};
+export const UpdatePasswordDocument = gql`
+    mutation UpdatePassword($token: String!, $newPassword: String!) {
+  updatePassword(token: $token, newPassword: $newPassword) {
+    errors {
+      ...RegularError
+    }
+    user {
+      ...RegularUser
+    }
+  }
+}
+    ${RegularErrorFragmentDoc}
+${RegularUserFragmentDoc}`;
+
+export function useUpdatePasswordMutation() {
+  return Urql.useMutation<UpdatePasswordMutation, UpdatePasswordMutationVariables>(UpdatePasswordDocument);
 };
 export const MeDocument = gql`
     query Me {
