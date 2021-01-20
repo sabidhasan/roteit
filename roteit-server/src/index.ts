@@ -1,23 +1,21 @@
 import 'reflect-metadata';
-import { MikroORM } from '@mikro-orm/core';
 import express from 'express';
 import redis from 'redis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
+import { createConnection } from 'typeorm';
 import { buildSchema } from 'type-graphql';
 import { ApolloServer } from 'apollo-server-express';
-import microConfig from './mikro-orm.config';
 import { Context } from './types';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
 import { LOCAL_DEV_ROUTE, prod, SESSION_COOKIE } from './constants';
+import { typeormConfig } from './typeormConfig';
 
 const main = async () => {
   // Auto run migrations
-  const orm = await MikroORM.init(microConfig);
-  const migrationsRan = await orm.getMigrator().up();
-  console.log(`Ran ${migrationsRan.length} total migration(s)!`);
+  const conn = await createConnection(typeormConfig);
 
   // Create Express app, to connect to Graphql
   const app = express();
@@ -62,7 +60,6 @@ const main = async () => {
       validate: false,
     }),
     context: ({ req, res }): Context => ({
-      em: orm.em,
       req,
       res,
       redisClient,

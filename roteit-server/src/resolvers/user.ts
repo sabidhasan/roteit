@@ -20,7 +20,7 @@ export class UserResolver {
 
     // Get user from cookie
     try {
-      return await ctx.em.findOne(User, { id: ctx.req.session.userId })
+      return await User.findOne(Number(ctx.req.session.userId));
     } catch {
       return null;
     }
@@ -39,24 +39,21 @@ export class UserResolver {
     const { username, password, email } = credentials;
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const user = ctx.em.create(User, {
+    const user = User.create({ 
       username: username.toLowerCase(),
       password: hashedPassword,
       email,
     });
 
-
     try {
-      await ctx.em.persistAndFlush(user);
+      await user.save();
     } catch (err) {
       if (err.detail?.includes('already exists') || err.code === '24505') {
         return { errors: [{ field: 'username', message: 'duplicate user detected' }] };
       }
 
       return {
-        errors: [
-          { field: 'username', message: `other error ${err.detail}` },
-        ],
+        errors: [{ field: 'username', message: `other error ${err.detail}` }],
       };
     }
 
@@ -74,9 +71,9 @@ export class UserResolver {
 
     try {
       if (validator.validate(credentials.emailOrUsername)) {
-        user = await ctx.em.findOneOrFail(User, { email: credentials.emailOrUsername.toLowerCase() });
+        user = await User.findOneOrFail({ where: { email: credentials.emailOrUsername.toLowerCase() } });
       } else {
-        user = await ctx.em.findOneOrFail(User, { username: credentials.emailOrUsername.toLowerCase() });
+        user = await User.findOneOrFail({ where: { username: credentials.emailOrUsername.toLowerCase() } });
       }
     } catch {
       return { errors: [{ field: 'emailOrUsername', message: 'could not find user' }] };
@@ -111,7 +108,7 @@ export class UserResolver {
     @Ctx() ctx: Context,
   ) {
     // Check if user exists, and email is valid
-    const user = await ctx.em.findOne(User, { email });
+    const user = await User.findOne({ where: { email } });
     if (!user || !validator.validate(email)) {
       return true;
     }
@@ -120,7 +117,6 @@ export class UserResolver {
     // Token expiry for Redis
     const ONE_HOUR_IN_MS = 1000 * 60 * 60;
     ctx.redisClient.set(`${PASSWORD_RESET_PREFIX}${token}`, user.id.toString(), 'EX', ONE_HOUR_IN_MS);
-
 
     const message = `<a href="http://localhost:3000/reset-password/${token}">Reset your password</a>`;
     try {
@@ -161,13 +157,15 @@ export class UserResolver {
     }
 
     // Check if user exists
-    const user = await ctx.em.findOne(User, { id: Number(tokenValueFromRedis) });
+    const userId = Number(tokenValueFromRedis);
+    const user = await User.findOne({ id: userId });
     if (!user) {
       return { errors: [{ field: 'password', message: 'Invalid user' }] };
     }
 
-    user.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    await ctx.em.persistAndFlush(user);
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await User.update({ id: userId }, { password: hashedPassword });
+
     // Delete key in Redis
     await new Promise((resolve) => {
       ctx.redisClient.del(redisKey, resolve);
