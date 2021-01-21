@@ -1,9 +1,8 @@
 import React from 'react';
 import { Box } from '@chakra-ui/react';
+import { TWrapper } from '../types';
 
-interface Props {
-  type?: 'small' | 'medium';
-}
+interface Props extends TWrapper {}
 
 const Wrapper: React.FC<Props> = ({ type, children }) => {
   return (

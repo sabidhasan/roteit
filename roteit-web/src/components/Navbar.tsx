@@ -5,9 +5,7 @@ import { loginPath, registerPath } from '../paths';
 import { isClientSide } from '../utils/isClientSide';
 import { useMeQuery, useLogoutMutation } from '../generated/graphql'
 
-interface Props {}
-
-export const Navbar: React.FC<Props> = () => {
+export const Navbar: React.FC<{}> = () => {
   const [{ fetching, data }] = useMeQuery({
     requestPolicy: 'network-only',
     pause: !isClientSide(),
@@ -48,7 +46,7 @@ export const Navbar: React.FC<Props> = () => {
   }
 
   return (
-    <Flex bg="sandybrown" padding={4}>
+    <Flex bg="sandybrown" padding={4} position="sticky" top={0} zIndex={9999}>
       {body}
       <Box marginLeft="auto">
       </Box>
