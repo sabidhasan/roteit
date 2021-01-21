@@ -12,11 +12,11 @@ import { parseGQLErrors } from '../../utils/parseGQLErrors';
 import { useUpdatePasswordMutation } from '../../generated/graphql';
 import { createUrqlClient } from '../../utils/createUrqlClient';
 
-interface Props {
-  resetToken: string;
-}
+// interface Props {
+//   resetToken: string;
+// }
 
-const ResetPassword: NextPage<Props> = ({ resetToken }) => {
+const ResetPassword: NextPage = () => {
   const [, updatePassword] = useUpdatePasswordMutation();
   const router = useRouter();
   const [tokenError, setTokenError] = useState('');
@@ -26,9 +26,8 @@ const ResetPassword: NextPage<Props> = ({ resetToken }) => {
       <Formik
         initialValues={{ password: '' }}
         onSubmit={async (values, helpers) => {
-          console.log(resetToken, values.password);
+          const resetToken = typeof router.query.resetToken === 'string' ? router.query.resetToken : '';
           const response = await updatePassword({ token: resetToken, newPassword: values.password });
-          console.log(response);
 
           if (response.data?.updatePassword.errors) {
             const errors = parseGQLErrors(response.data.updatePassword.errors);
@@ -81,10 +80,5 @@ const ResetPassword: NextPage<Props> = ({ resetToken }) => {
     </Wrapper>
   );
 }
-
-// Allows SSR for the dynamic route
-export const getServerSideProps: GetStaticProps<any> = async ({ params }) => ({
-  props: { resetToken: params?.resetToken as string, }
-});
 
 export default withUrqlClient(createUrqlClient)(ResetPassword);

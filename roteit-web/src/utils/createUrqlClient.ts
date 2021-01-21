@@ -1,7 +1,24 @@
 import { cacheExchange } from '@urql/exchange-graphcache';
+import { dedupExchange, fetchExchange, Exchange } from 'urql';
+import { pipe, tap } from 'wonka';
+import Router from 'next/router';
 import { LogoutMutation, MeDocument, MeQuery } from '../generated/graphql';
-import { dedupExchange, fetchExchange } from 'urql';
 import { updateQuery } from './updateQuery';
+import { loginPath } from '../paths';
+
+// This custom exchange from https://github.com/FormidableLabs/urql/issues/225 catches all errors
+// and redirects non-authenticated to 
+const errorExchange: Exchange = ({ forward }) => ops$ => {
+  return pipe(
+    forward(ops$),
+    tap(({ error }) => {
+      if (error?.message.includes('Auth token missing')) {
+        // redirect to login since user is not authenticated
+        Router.replace(loginPath);
+      }
+    })
+  );
+};
 
 // Creates URQL client using withUrqlClient
 export const createUrqlClient = (ssrExchange: any) => ({
@@ -23,5 +40,5 @@ export const createUrqlClient = (ssrExchange: any) => ({
         }
       },
     },
-  }), ssrExchange, fetchExchange],
+  }), errorExchange, ssrExchange, fetchExchange],
 });

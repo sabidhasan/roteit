@@ -27,8 +27,8 @@ const Login: React.FC<Props> = () => {
           if (registerResponse?.errors) {
             helpers.setErrors(parseGQLErrors(registerResponse.errors));
           } else if (registerResponse?.user) {
-            // Send user to home, as login was successful
-            router.push(homePath);
+            // Send user to redirect URL if it exists or home
+            router.push(router.query.redirect ? router.query.redirect as string : homePath);
           }
         }}
       >
