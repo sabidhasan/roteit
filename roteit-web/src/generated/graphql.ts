@@ -18,14 +18,26 @@ export type Scalars = {
 
 export type Query = {
   __typename?: 'Query';
-  posts: Array<Post>;
+  posts: PostsPaginated;
   post?: Maybe<Post>;
   me?: Maybe<User>;
 };
 
 
+export type QueryPostsArgs = {
+  cursor?: Maybe<Scalars['String']>;
+  limit: Scalars['Int'];
+};
+
+
 export type QueryPostArgs = {
   id: Scalars['Int'];
+};
+
+export type PostsPaginated = {
+  __typename?: 'PostsPaginated';
+  posts: Array<Post>;
+  done: Scalars['Boolean'];
 };
 
 export type Post = {
@@ -38,6 +50,7 @@ export type Post = {
   text: Scalars['String'];
   points: Scalars['Int'];
   link?: Maybe<Scalars['String']>;
+  textSnippet: Scalars['String'];
 };
 
 export type User = {
@@ -239,15 +252,22 @@ export type MeQuery = (
   )> }
 );
 
-export type PostsQueryVariables = Exact<{ [key: string]: never; }>;
+export type PaginatedPostsQueryVariables = Exact<{
+  limit: Scalars['Int'];
+  cursor?: Maybe<Scalars['String']>;
+}>;
 
 
-export type PostsQuery = (
+export type PaginatedPostsQuery = (
   { __typename?: 'Query' }
-  & { posts: Array<(
-    { __typename?: 'Post' }
-    & Pick<Post, 'id' | 'createdAt' | 'updatedAt' | 'title'>
-  )> }
+  & { posts: (
+    { __typename?: 'PostsPaginated' }
+    & Pick<PostsPaginated, 'done'>
+    & { posts: Array<(
+      { __typename?: 'Post' }
+      & Pick<Post, 'id' | 'title' | 'textSnippet' | 'points' | 'createdAt'>
+    )> }
+  ) }
 );
 
 export const RegularErrorFragmentDoc = gql`
@@ -358,17 +378,21 @@ export const MeDocument = gql`
 export function useMeQuery(options: Omit<Urql.UseQueryArgs<MeQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<MeQuery>({ query: MeDocument, ...options });
 };
-export const PostsDocument = gql`
-    query Posts {
-  posts {
-    id
-    createdAt
-    updatedAt
-    title
+export const PaginatedPostsDocument = gql`
+    query PaginatedPosts($limit: Int!, $cursor: String) {
+  posts(cursor: $cursor, limit: $limit) {
+    done
+    posts {
+      id
+      title
+      textSnippet
+      points
+      createdAt
+    }
   }
 }
     `;
 
-export function usePostsQuery(options: Omit<Urql.UseQueryArgs<PostsQueryVariables>, 'query'> = {}) {
-  return Urql.useQuery<PostsQuery>({ query: PostsDocument, ...options });
+export function usePaginatedPostsQuery(options: Omit<Urql.UseQueryArgs<PaginatedPostsQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<PaginatedPostsQuery>({ query: PaginatedPostsDocument, ...options });
 };
