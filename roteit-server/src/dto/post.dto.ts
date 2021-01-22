@@ -1,4 +1,5 @@
-import { Field, InputType } from "type-graphql";
+import { Field, InputType, ObjectType } from "type-graphql";
+import { Post } from "../entities/Post";
 
 @InputType()
 export class PostCreateDto {
@@ -10,4 +11,14 @@ export class PostCreateDto {
 
   @Field({ nullable: true })
   link: string;
+}
+
+
+@ObjectType()
+export class PostsPaginated {
+  @Field(() => [Post])
+  posts: Post[];
+
+  @Field(() => Boolean)
+  done: boolean;
 }
