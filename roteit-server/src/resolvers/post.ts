@@ -20,18 +20,26 @@ export class PostResolver {
     const requestedLimit = (limit > 500 ? 500 : limit);
     const fetchLimit = requestedLimit + 1;
 
-    const query = getConnection()
-    .getRepository(Post)
-    .createQueryBuilder('post')
-    .orderBy('"createdAt"', 'DESC')
-    .addOrderBy('id', 'DESC')
-    .take(fetchLimit);
-    
+    const inputs: any[] = [fetchLimit];
+
     if (cursor) {
-      query.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) })
+      inputs.push(new Date(parseInt(cursor)));
     }
-    
-    const posts = await query.getMany();
+
+    const posts = await getConnection().query(`
+      SELECT p.*,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'email', u.email
+      ) "postAuthor"
+      FROM post p
+      LEFT JOIN "user" u ON u.id = p."creatorId"
+      ${cursor ? `where p."createdAt" < $2` : ''}
+      ORDER BY p."createdAt"
+      LIMIT $1
+    `, inputs);
+
     return {
       posts: posts.slice(0, requestedLimit),
       done: posts.length !== fetchLimit,

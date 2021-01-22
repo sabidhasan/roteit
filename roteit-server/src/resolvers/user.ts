@@ -2,15 +2,25 @@ import { v4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import validator from 'email-validator';
 import { UserResponseDto, UserCredentialsDto, UserCreateDto } from '../dto/user.dto';
-import { Arg, Ctx, Mutation, Query, Resolver } from 'type-graphql';
+import { Arg, Ctx, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
 import { PASSWORD_RESET_PREFIX, SALT_ROUNDS, SESSION_COOKIE } from '../constants';
 import { User } from '../entities/User';
 import { Context } from '../types';
 import { passwordIsValid, validateCredentials } from '../utils/validateCredentials';
 import { EmailService } from '../utils/emailService';
 
-@Resolver()
+@Resolver(() => User)
 export class UserResolver {
+  @FieldResolver(() => String)
+  email(@Root() rootUser: User, @Ctx() ctx: Context) {
+    // Mask other users' emails
+    if (rootUser.id !== ctx.req.session.userId) {
+      return '';
+    }
+    
+    return rootUser.email;
+  }
+
   @Query(() => User, { nullable: true })
   async me(@Ctx() ctx: Context) {
     // Check if there is a user id in session cookie

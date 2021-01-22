@@ -30,7 +30,7 @@ const cursorBasedPaginationExchange = (): Resolver => {
     const allFields = cache.inspectFields(parentKey);
     const fieldInfos = allFields.filter(info => info.fieldName === fieldName);
     const size = fieldInfos.length;
-    console.log('ere')
+
     if (size === 0) {
       return undefined;
     }
@@ -38,7 +38,7 @@ const cursorBasedPaginationExchange = (): Resolver => {
     // If data is in cache, return it from the cache
     const fieldKey = `${fieldName}(${stringifyVariables(fieldArgs)})`;
     const isInCache = cache.resolve(cache.resolve(parentKey, fieldKey) as string, 'posts');
-    info.partial = isInCache;
+    info.partial = !isInCache;
 
     let done = false;
     const post: string[] = [];
