@@ -1,6 +1,7 @@
+import { ConnectionOptions } from 'typeorm';
+import path from 'path';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
-import { ConnectionOptions } from 'typeorm';
 
 export const typeormConfig: ConnectionOptions = {
   type: 'postgres',
@@ -8,6 +9,7 @@ export const typeormConfig: ConnectionOptions = {
   username: 'postgres',
   password: 'postgres',
   logging: true,
+  migrations: [path.join(__dirname, './migrations/*')],
   synchronize: true,
   entities: [Post, User]
 };

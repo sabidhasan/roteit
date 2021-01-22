@@ -1,14 +1,41 @@
 import { Post } from '../entities/Post';
-import { Arg, Ctx, Int, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
+import { Arg, Ctx, FieldResolver, Int, Mutation, Query, Resolver, Root, UseMiddleware } from 'type-graphql';
+import { getConnection } from 'typeorm';
 import { Context } from '../types';
 import { isAuthenticated } from '../middleware/isAuthenticated';
-import { PostCreateDto } from '../dto/post.dto';
+import { PostCreateDto, PostsPaginated } from '../dto/post.dto';
 
-@Resolver()
+@Resolver(() => Post)
 export class PostResolver {
-  @Query(() => [Post])
-  posts(): Promise<Post[]> {
-    return Post.find();
+  @FieldResolver(() => String)
+  textSnippet(@Root() rootPost: Post): string {
+    return rootPost.text.slice(1, 100);
+  }
+
+  @Query(() => PostsPaginated)
+  async posts(
+    @Arg('limit', () => Int) limit: number,
+    @Arg('cursor', () => String, { description: 'Cursor represents the datetime stamp for posts', nullable: true }) cursor: string | null,
+  ): Promise<PostsPaginated> {
+    const requestedLimit = (limit > 500 ? 500 : limit);
+    const fetchLimit = requestedLimit + 1;
+
+    const query = getConnection()
+    .getRepository(Post)
+    .createQueryBuilder('post')
+    .orderBy('"createdAt"', 'DESC')
+    .addOrderBy('id', 'DESC')
+    .take(fetchLimit);
+    
+    if (cursor) {
+      query.where('"createdAt" < :cursor', { cursor: new Date(parseInt(cursor)) })
+    }
+    
+    const posts = await query.getMany();
+    return {
+      posts: posts.slice(0, requestedLimit),
+      done: posts.length !== fetchLimit,
+    };
   }
 
   @Query(() => Post, { nullable: true })
