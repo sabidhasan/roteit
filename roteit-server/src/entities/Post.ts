@@ -45,4 +45,7 @@ export class Post extends BaseEntity {
   // @Field(() => Upvote)
   @OneToMany(() => Upvote, (upvote) => upvote.post)
   upvotes: Upvote[];
+
+  @Field(() => Int, { nullable: true, description: 'What the current user fetching this post has done with respect to contributing to points for this post' })
+  voteStatus: number | null;
 }

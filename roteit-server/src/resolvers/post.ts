@@ -18,14 +18,23 @@ export class PostResolver {
   async posts(
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { description: 'Cursor represents the datetime stamp for posts', nullable: true }) cursor: string | null,
+    @Ctx() ctx: Context,
   ): Promise<PostsPaginated> {
+    const { userId } = ctx.req.session;
     const requestedLimit = (limit > 500 ? 500 : limit);
     const fetchLimit = requestedLimit + 1;
 
     const inputs: any[] = [fetchLimit];
 
+    if (ctx.req.session.userId) {
+      inputs.push(ctx.req.session.userId);
+    }
+
+    let cursorPosition = 3;
     if (cursor) {
       inputs.push(new Date(parseInt(cursor)));
+      // For SQL $2/$3 BS...
+      cursorPosition = inputs.length;
     }
 
     const posts = await getConnection().query(`
@@ -34,10 +43,11 @@ export class PostResolver {
         'id', u.id,
         'username', u.username,
         'email', u.email
-      ) "postAuthor"
+      ) "postAuthor",
+      ${userId ? '(SELECT value FROM upvote WHERE "userId" = $2 AND "postId" = p.id) "voteStatus"' : 'NULL as "voteStatus"'}
       FROM post p
       LEFT JOIN "user" u ON u.id = p."creatorId"
-      ${cursor ? `where p."createdAt" < $2` : ''}
+      ${cursor ? `where p."createdAt" < $${cursorPosition}` : ''}
       ORDER BY p."createdAt" DESC
       LIMIT $1
     `, inputs);
@@ -129,7 +139,7 @@ export class PostResolver {
       }
     } else {
       // Existing upvote is the same as what user is voting
+      return false;
     }
-
   }
 }
