@@ -1,6 +1,7 @@
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 import { Field, Int, ObjectType } from "type-graphql";
 import { User } from './User';
+import { Upvote } from './Upvote';
 
 @ObjectType()
 @Entity()
@@ -40,4 +41,8 @@ export class Post extends BaseEntity {
   @Field({ nullable: true })
   @Column({ nullable: true })
   link?: string;
+
+  // @Field(() => Upvote)
+  @OneToMany(() => Upvote, (upvote) => upvote.post)
+  upvotes: Upvote[];
 }

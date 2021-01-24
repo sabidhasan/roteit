@@ -4,12 +4,14 @@ import { getConnection } from 'typeorm';
 import { Context } from '../types';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { PostCreateDto, PostsPaginated } from '../dto/post.dto';
+import { Upvote } from '../entities/Upvote';
+import { posix } from 'path';
 
 @Resolver(() => Post)
 export class PostResolver {
   @FieldResolver(() => String)
   textSnippet(@Root() rootPost: Post): string {
-    return rootPost.text.slice(1, 100);
+    return rootPost.text.slice(0, 100);
   }
 
   @Query(() => PostsPaginated)
@@ -36,7 +38,7 @@ export class PostResolver {
       FROM post p
       LEFT JOIN "user" u ON u.id = p."creatorId"
       ${cursor ? `where p."createdAt" < $2` : ''}
-      ORDER BY p."createdAt"
+      ORDER BY p."createdAt" DESC
       LIMIT $1
     `, inputs);
 
@@ -85,5 +87,49 @@ export class PostResolver {
     } catch {
       return false;
     }
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuthenticated)
+  async vote(
+    @Arg('postId', () => Int) postId: number,
+    @Arg('value', () => Int) value: number,
+    @Ctx() ctx: Context,
+  ) {
+    const { userId } = ctx.req.session;
+    const actualValue = value >= 0 ? 1 : -1;
+
+    const existingUpvote = await Upvote.findOne({ where: { postId, userId }});
+
+    if (existingUpvote && existingUpvote.value !== actualValue) {
+      // User has voted but it was different than the vote now
+      try {
+        await getConnection().query(`
+          START TRANSACTION;
+          UPDATE upvote SET "value" = ${value} WHERE "postId" = ${postId} AND "userId" = ${userId};
+          UPDATE "post" SET "points" = "points" + ${actualValue * 2} WHERE "post"."id" = ${postId};
+          COMMIT;
+        `);
+        return true;
+      } catch {
+        return false;
+      }
+    } else if (!existingUpvote) {
+      // First time voting
+      try {
+        await getConnection().query(`
+        START TRANSACTION;
+        INSERT INTO upvote ("userId", "postId", "value") VALUES (${userId}, ${postId}, ${actualValue});
+        UPDATE "post" SET "points" = "points" + ${actualValue} WHERE "post"."id" = ${postId};
+        COMMIT;
+      `);
+        return true;
+      } catch {
+        return false;
+      }
+    } else {
+      // Existing upvote is the same as what user is voting
+    }
+
   }
 }
