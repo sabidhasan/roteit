@@ -1,7 +1,7 @@
 import React from 'react';
-import { Box, Button, Flex, Link } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Link, Divider } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { loginPath, registerPath } from '../paths';
+import { createPostPath, homePath, loginPath, registerPath } from '../paths';
 import { isClientSide } from '../utils/isClientSide';
 import { useMeQuery, useLogoutMutation } from '../generated/graphql'
 
@@ -17,7 +17,11 @@ export const Navbar: React.FC<{}> = () => {
   if (data?.me) {
     // User logged in
     body = (
-      <Flex>
+      <Flex alignItems="center">
+        <NextLink href={createPostPath}>
+          <Button as={Link} marginRight={3}>Create Post</Button>
+        </NextLink>
+        <Divider orientation="vertical" marginRight={3} />
         <Box marginRight={5}>{data.me.username}</Box>
         <Button
           variant="link"
@@ -47,9 +51,13 @@ export const Navbar: React.FC<{}> = () => {
 
   return (
     <Flex bg="sandybrown" padding={4} position="sticky" top={0} zIndex={9999}>
+      <NextLink href={homePath}>
+        <Link>
+          <Heading>RoteIt</Heading>
+        </Link>
+      </NextLink>  
+      <Box marginLeft="auto"></Box>
       {body}
-      <Box marginLeft="auto">
-      </Box>
     </Flex>
   );
 };

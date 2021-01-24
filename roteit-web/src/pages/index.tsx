@@ -31,14 +31,6 @@ const Index = () => {
 
   return (
     <Layout>
-      <Flex align="center" marginBottom={15} marginTop={5}>
-        <Heading>RoteIt</Heading>
-        <Box marginLeft="auto">
-          <NextLink href={createPostPath}>
-            <Link>Create Post</Link>
-          </NextLink>
-        </Box>
-      </Flex>
       {postContent}
       {
         data && !data.posts.done ? 

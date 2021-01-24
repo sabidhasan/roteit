@@ -1,7 +1,7 @@
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import { Box, Flex, Heading, IconButton, Text } from '@chakra-ui/react';
 import React, { useState } from 'react';
-import { Spinner } from "@chakra-ui/react"
+import NextLink from 'next/link';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
+import { Box, Flex, Heading, IconButton, Link, Text } from '@chakra-ui/react';
 import { PostFragmentFragment, useVoteMutation } from '../generated/graphql';
 
 interface Props {
@@ -47,7 +47,11 @@ const PostVotes: React.FC<Props> = ({ post }) => {
         />
       </Flex>
       <Box>
-        <Heading size="l">{post.title}</Heading>
+        <Link>
+          <NextLink href={'/post/[id]'} as={`/post/${post.id}`}>
+            <Heading size="l">{post.title}</Heading>
+          </NextLink>
+        </Link>
           by
           {` ${post.postAuthor.username}`}
         <Text size="m">{post.textSnippet}...</Text>

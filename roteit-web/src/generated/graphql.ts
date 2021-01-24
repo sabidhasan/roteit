@@ -51,7 +51,7 @@ export type Post = {
   text: Scalars['String'];
   points: Scalars['Int'];
   link?: Maybe<Scalars['String']>;
-  /** What the current user fetching this post has done towards points for this post */
+  /** What the current user fetching this post has done with respect to contributing to points for this post */
   voteStatus?: Maybe<Scalars['Int']>;
   textSnippet: Scalars['String'];
 };
@@ -282,6 +282,23 @@ export type MeQuery = (
   )> }
 );
 
+export type PostQueryVariables = Exact<{
+  id: Scalars['Int'];
+}>;
+
+
+export type PostQuery = (
+  { __typename?: 'Query' }
+  & { post?: Maybe<(
+    { __typename?: 'Post' }
+    & Pick<Post, 'id' | 'text' | 'createdAt' | 'title' | 'points' | 'voteStatus'>
+    & { postAuthor: (
+      { __typename?: 'User' }
+      & Pick<User, 'id' | 'username'>
+    ) }
+  )> }
+);
+
 export type PaginatedPostsQueryVariables = Exact<{
   limit: Scalars['Int'];
   cursor?: Maybe<Scalars['String']>;
@@ -430,6 +447,26 @@ export const MeDocument = gql`
 
 export function useMeQuery(options: Omit<Urql.UseQueryArgs<MeQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<MeQuery>({ query: MeDocument, ...options });
+};
+export const PostDocument = gql`
+    query Post($id: Int!) {
+  post(id: $id) {
+    id
+    postAuthor {
+      id
+      username
+    }
+    text
+    createdAt
+    title
+    points
+    voteStatus
+  }
+}
+    `;
+
+export function usePostQuery(options: Omit<Urql.UseQueryArgs<PostQueryVariables>, 'query'> = {}) {
+  return Urql.useQuery<PostQuery>({ query: PostDocument, ...options });
 };
 export const PaginatedPostsDocument = gql`
     query PaginatedPosts($limit: Int!, $cursor: String) {

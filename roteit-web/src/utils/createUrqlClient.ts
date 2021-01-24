@@ -64,14 +64,13 @@ const cursorBasedPaginationExchange = (): Resolver => {
   };
 };
 
-
-
-
 // Creates URQL client using withUrqlClient
-export const createUrqlClient = (ssrExchange: any) => ({
+export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
   url: 'http://localhost:4000/graphql',
   fetchOptions: {
     credentials: 'include' as const,
+    // Pass on the cookie for SSR onto GQL server
+    headers: { cookie: ctx?.req?.headers?.cookie },
   },
   exchanges: [
     dedupExchange,
