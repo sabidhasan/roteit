@@ -5,7 +5,6 @@ import { Context } from '../types';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { PostCreateDto, PostsPaginated } from '../dto/post.dto';
 import { Upvote } from '../entities/Upvote';
-import { posix } from 'path';
 
 @Resolver(() => Post)
 export class PostResolver {
@@ -59,8 +58,23 @@ export class PostResolver {
   }
 
   @Query(() => Post, { nullable: true })
-  post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
-    return Post.findOne({ id });
+  async post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
+    try {
+      return (await getConnection().query(`
+      SELECT p.*,
+      json_build_object(
+        'id', u.id,
+        'username', u.username,
+        'email', u.email
+      ) "postAuthor"
+      FROM post p
+      LEFT JOIN "user" u ON u.id = p."creatorId"
+      WHERE p.id = $1
+      LIMIT 1;
+    `, [id]))[0];
+    } catch {
+      return undefined;
+    }
   }
 
   @Mutation(() => Post)
