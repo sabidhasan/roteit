@@ -47,6 +47,7 @@ export type Post = {
   updatedAt: Scalars['String'];
   title: Scalars['String'];
   creatorId: Scalars['Float'];
+  postAuthor: User;
   text: Scalars['String'];
   points: Scalars['Int'];
   link?: Maybe<Scalars['String']>;
@@ -69,6 +70,7 @@ export type Mutation = {
   createPost: Post;
   updatePost?: Maybe<Post>;
   deletePost: Scalars['Boolean'];
+  vote: Scalars['Boolean'];
   register: UserResponseDto;
   login: UserResponseDto;
   logout: Scalars['Boolean'];
@@ -90,6 +92,12 @@ export type MutationUpdatePostArgs = {
 
 export type MutationDeletePostArgs = {
   id: Scalars['Float'];
+};
+
+
+export type MutationVoteArgs = {
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
 };
 
 
@@ -145,6 +153,15 @@ export type UserCreateDto = {
 export type RegularErrorFragment = (
   { __typename?: 'FieldError' }
   & Pick<FieldError, 'field' | 'message'>
+);
+
+export type PostFragmentFragment = (
+  { __typename?: 'Post' }
+  & Pick<Post, 'id' | 'title' | 'textSnippet' | 'points' | 'createdAt'>
+  & { postAuthor: (
+    { __typename?: 'User' }
+    & Pick<User, 'id' | 'username'>
+  ) }
 );
 
 export type RegularUserFragment = (
@@ -241,6 +258,17 @@ export type UpdatePasswordMutation = (
   ) }
 );
 
+export type VoteMutationVariables = Exact<{
+  value: Scalars['Int'];
+  postId: Scalars['Int'];
+}>;
+
+
+export type VoteMutation = (
+  { __typename?: 'Mutation' }
+  & Pick<Mutation, 'vote'>
+);
+
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -265,7 +293,7 @@ export type PaginatedPostsQuery = (
     & Pick<PostsPaginated, 'done'>
     & { posts: Array<(
       { __typename?: 'Post' }
-      & Pick<Post, 'id' | 'title' | 'textSnippet' | 'points' | 'createdAt'>
+      & PostFragmentFragment
     )> }
   ) }
 );
@@ -274,6 +302,19 @@ export const RegularErrorFragmentDoc = gql`
     fragment RegularError on FieldError {
   field
   message
+}
+    `;
+export const PostFragmentFragmentDoc = gql`
+    fragment PostFragment on Post {
+  id
+  title
+  textSnippet
+  points
+  createdAt
+  postAuthor {
+    id
+    username
+  }
 }
     `;
 export const RegularUserFragmentDoc = gql`
@@ -367,6 +408,15 @@ ${RegularUserFragmentDoc}`;
 export function useUpdatePasswordMutation() {
   return Urql.useMutation<UpdatePasswordMutation, UpdatePasswordMutationVariables>(UpdatePasswordDocument);
 };
+export const VoteDocument = gql`
+    mutation Vote($value: Int!, $postId: Int!) {
+  vote(value: $value, postId: $postId)
+}
+    `;
+
+export function useVoteMutation() {
+  return Urql.useMutation<VoteMutation, VoteMutationVariables>(VoteDocument);
+};
 export const MeDocument = gql`
     query Me {
   me {
@@ -383,15 +433,11 @@ export const PaginatedPostsDocument = gql`
   posts(cursor: $cursor, limit: $limit) {
     done
     posts {
-      id
-      title
-      textSnippet
-      points
-      createdAt
+      ...PostFragment
     }
   }
 }
-    `;
+    ${PostFragmentFragmentDoc}`;
 
 export function usePaginatedPostsQuery(options: Omit<Urql.UseQueryArgs<PaginatedPostsQueryVariables>, 'query'> = {}) {
   return Urql.useQuery<PaginatedPostsQuery>({ query: PaginatedPostsDocument, ...options });

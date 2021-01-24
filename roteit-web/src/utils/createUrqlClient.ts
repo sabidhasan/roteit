@@ -56,7 +56,7 @@ const cursorBasedPaginationExchange = (): Resolver => {
     });
 
     return {
-      __typename: 'PaginatedPosts',
+      __typename: 'PostsPaginated',
       done,
       post: post,
     };
@@ -80,7 +80,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       resolvers: {
         Query: {
-          PaginatedPosts: cursorBasedPaginationExchange(),
+          posts: cursorBasedPaginationExchange(),
         }
       },
       updates: {
@@ -93,7 +93,15 @@ export const createUrqlClient = (ssrExchange: any) => ({
               // Clear out the user cache, as the user has logged out
               () => ({ me: null })
             );
-          }
+          },
+          createPost: (_result, args, cache, info) => {
+            // Invalidate post cache
+            const allFields = cache.inspectFields('Query');
+            const fieldInfos = allFields.filter((f) => f.fieldName === 'posts');
+            fieldInfos.forEach((fieldInfo) => {
+              cache.invalidate('Query', 'posts', fieldInfo.arguments || {});
+            });
+          },
         },
       },
     }),

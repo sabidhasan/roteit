@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { withUrqlClient } from 'next-urql';
 import { Box, Button, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react';
+import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { usePaginatedPostsQuery } from '../generated/graphql';
 import Layout from '../components/Layout';
 import { createPostPath } from '../paths';
+import PostVotes from '../components/PostVotes';
 
 const Index = () => {
   const [cursor, setCursor] = useState<undefined | string>(undefined);
@@ -21,11 +23,8 @@ const Index = () => {
     (<div>Loading</div>) :
     (
       <Stack spacing={10}>
-        {!data?.posts.posts.length ? null : data.posts.posts.map((d) => (
-          <Box key={d.id} borderWidth={2} shadow="sm" padding={3}>
-            <Heading size="l">{d.title}</Heading>
-            <Text size="m">{d.textSnippet}...</Text>
-          </Box>
+        {!data?.posts.posts.length ? null : data.posts.posts.map((post) => (
+          <PostVotes post={post} />
         ))}
       </Stack>
     );
