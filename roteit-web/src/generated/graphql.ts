@@ -51,6 +51,8 @@ export type Post = {
   text: Scalars['String'];
   points: Scalars['Int'];
   link?: Maybe<Scalars['String']>;
+  /** What the current user fetching this post has done towards points for this post */
+  voteStatus?: Maybe<Scalars['Int']>;
   textSnippet: Scalars['String'];
 };
 
@@ -157,7 +159,7 @@ export type RegularErrorFragment = (
 
 export type PostFragmentFragment = (
   { __typename?: 'Post' }
-  & Pick<Post, 'id' | 'title' | 'textSnippet' | 'points' | 'createdAt'>
+  & Pick<Post, 'id' | 'title' | 'textSnippet' | 'points' | 'createdAt' | 'voteStatus'>
   & { postAuthor: (
     { __typename?: 'User' }
     & Pick<User, 'id' | 'username'>
@@ -311,6 +313,7 @@ export const PostFragmentFragmentDoc = gql`
   textSnippet
   points
   createdAt
+  voteStatus
   postAuthor {
     id
     username

@@ -24,7 +24,7 @@ const Index = () => {
     (
       <Stack spacing={10}>
         {!data?.posts.posts.length ? null : data.posts.posts.map((post) => (
-          <PostVotes post={post} />
+          <PostVotes post={post} key={post.id} />
         ))}
       </Stack>
     );

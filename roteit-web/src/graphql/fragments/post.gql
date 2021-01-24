@@ -4,6 +4,7 @@ fragment PostFragment on Post {
   textSnippet,
   points,
   createdAt,
+  voteStatus,
   postAuthor {
     id,
     username
