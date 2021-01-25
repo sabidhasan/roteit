@@ -90,25 +90,42 @@ export class PostResolver {
   }
 
   @Mutation(() => Post, { nullable: true })
+  @UseMiddleware(isAuthenticated)
   async updatePost(
-    @Arg('id') id: number,
-    @Arg('title', () => String, { nullable: true }) title: string,
+    @Arg('id', () => Int) id: number,
+    @Arg('title', () => String) title: string,
+    @Arg('text', () => String) text: string,
+    @Ctx() ctx: Context,
   ): Promise<Post | null> {
-    const post = await Post.findOne({ id });
-    if (post && title) {
-      await Post.update({ id }, { title });
-      return post;
-    }
+    const result = await getConnection()
+      .createQueryBuilder()
+      .update(Post)
+      .set({ title, text })
+      .where('id = :id AND "creatorId" = :creatorId', { id, creatorId: ctx.req.session.userId })
+      .returning('*')
+      .execute();
 
-    return null;
+    return result.raw[0];
   }
 
   @Mutation(() => Boolean)
-  async deletePost(@Arg('id') id: number): Promise<Boolean> {
+  @UseMiddleware(isAuthenticated)
+  async deletePost(
+    @Arg('id', () => Int) id: number,
+    @Ctx() ctx: Context
+  ): Promise<Boolean> {
+    const post = await Post.findOne(id);
+
+    if (!post || post.creatorId !== ctx.req.session.userId) {
+      throw new Error('Cannot find post or you do not have permission');
+    }
+
     try {
+      await Upvote.delete({ postId: id });
       await Post.delete({ id });
       return true;
-    } catch {
+    } catch  (e) {
+      console.log(e);
       return false;
     }
   }
