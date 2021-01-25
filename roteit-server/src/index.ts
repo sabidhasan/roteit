@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import 'dotenv-safe/config';
 import express from 'express';
 import redis from 'redis';
 import session from 'express-session';
@@ -10,8 +11,9 @@ import { ApolloServer } from 'apollo-server-express';
 import { Context } from './types';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
-import { LOCAL_DEV_ROUTE, prod, SESSION_COOKIE } from './constants';
+import { prod, SESSION_COOKIE } from './constants';
 import { typeormConfig } from './typeormConfig';
+import { getRedisConfig } from './redisConfig';
 import { createUserDataLoader, createUpvoteDataLoader } from './utils/dataloaders';
 
 const main = async () => {
@@ -21,17 +23,18 @@ const main = async () => {
   
   // Create Express app, to connect to Graphql
   const app = express();
-  app.listen(4000, () => {
-    console.log('Listening on port 4000');
+  app.listen(process.env.PORT, () => {
+    console.log(`Listening on port ${process.env.PORT}`);
   });
 
   // Redis store connection
   const RedisStore = connectRedis(session);
-  const redisClient = redis.createClient();
+  const redisClient = redis.createClient(getRedisConfig());
 
-  // Accept CORS on local requests
+  // Accept CORS on requests, and set proxy in case prod environment needs it
+  app.set('proxy', 1)
   const CORS_SETTINGS = {
-    origin: LOCAL_DEV_ROUTE,
+    origin: process.env.CORS_ORIGIN,
     credentials: true,
   };
 
@@ -41,7 +44,7 @@ const main = async () => {
     name: SESSION_COOKIE,
     // Disable touch reduces the number of requests to Redis
     store: new RedisStore({ client: redisClient, disableTouch: true }),
-    secret: 'my secret',
+    secret: process.env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
