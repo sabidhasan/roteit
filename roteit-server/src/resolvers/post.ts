@@ -5,6 +5,7 @@ import { Context } from '../types';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { PostCreateDto, PostsPaginated } from '../dto/post.dto';
 import { Upvote } from '../entities/Upvote';
+import { User } from '../entities/User';
 
 @Resolver(() => Post)
 export class PostResolver {
@@ -13,40 +14,46 @@ export class PostResolver {
     return rootPost.text.slice(0, 100);
   }
 
+  @FieldResolver(() => User, { nullable: true })
+  postAuthor(
+    @Root() post: Post,
+    @Ctx() ctx: Context,
+  ): Promise<User | undefined> {
+    return ctx.userLoader.load(post.creatorId);
+  }
+
+  @FieldResolver(() => Int, { nullable: true })
+  async voteStatus(
+    @Root() post: Post,
+    @Ctx() ctx: Context,
+  ): Promise<number | null> {
+    const { userId } = ctx.req.session;
+    if (!userId) {
+      return null;
+    }
+
+    const upvote = await ctx.upvoteLoader.load({ userId, postId: post.id });
+    return upvote?.value || null;
+  }
+
   @Query(() => PostsPaginated)
   async posts(
     @Arg('limit', () => Int) limit: number,
     @Arg('cursor', () => String, { description: 'Cursor represents the datetime stamp for posts', nullable: true }) cursor: string | null,
-    @Ctx() ctx: Context,
   ): Promise<PostsPaginated> {
-    const { userId } = ctx.req.session;
     const requestedLimit = (limit > 500 ? 500 : limit);
     const fetchLimit = requestedLimit + 1;
 
     const inputs: any[] = [fetchLimit];
 
-    if (ctx.req.session.userId) {
-      inputs.push(ctx.req.session.userId);
-    }
-
-    let cursorPosition = 3;
     if (cursor) {
       inputs.push(new Date(parseInt(cursor)));
-      // For SQL $2/$3 BS...
-      cursorPosition = inputs.length;
     }
 
     const posts = await getConnection().query(`
-      SELECT p.*,
-      json_build_object(
-        'id', u.id,
-        'username', u.username,
-        'email', u.email
-      ) "postAuthor",
-      ${userId ? '(SELECT value FROM upvote WHERE "userId" = $2 AND "postId" = p.id) "voteStatus"' : 'NULL as "voteStatus"'}
+      SELECT p.*
       FROM post p
-      LEFT JOIN "user" u ON u.id = p."creatorId"
-      ${cursor ? `where p."createdAt" < $${cursorPosition}` : ''}
+      ${cursor ? `where p."createdAt" < $2` : ''}
       ORDER BY p."createdAt" DESC
       LIMIT $1
     `, inputs);
@@ -61,14 +68,8 @@ export class PostResolver {
   async post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
     try {
       return (await getConnection().query(`
-      SELECT p.*,
-      json_build_object(
-        'id', u.id,
-        'username', u.username,
-        'email', u.email
-      ) "postAuthor"
+      SELECT p.*
       FROM post p
-      LEFT JOIN "user" u ON u.id = p."creatorId"
       WHERE p.id = $1
       LIMIT 1;
     `, [id]))[0];

@@ -13,6 +13,7 @@ import { UserResolver } from './resolvers/user';
 import { LOCAL_DEV_ROUTE, prod, SESSION_COOKIE } from './constants';
 import { typeormConfig } from './typeormConfig';
 import { Post } from './entities/Post';
+import { createUserDataLoader, createUpvoteDataLoader } from './utils/dataloaders';
 
 const main = async () => {
   // Auto run migrations
@@ -67,6 +68,8 @@ const main = async () => {
       req,
       res,
       redisClient,
+      userLoader: createUserDataLoader(),
+      upvoteLoader: createUpvoteDataLoader(),
     }),
   });
   apolloServer.applyMiddleware({
