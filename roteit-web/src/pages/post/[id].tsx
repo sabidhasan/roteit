@@ -1,26 +1,25 @@
 import React from 'react';
 import { withUrqlClient } from 'next-urql';
-import { useRouter } from 'next/router';
 import { createUrqlClient } from '../../utils/createUrqlClient';
-import { usePostQuery } from '../../generated/graphql';
 import Layout from '../../components/Layout';
-import { Heading } from '@chakra-ui/react';
+import { Flex, Heading } from '@chakra-ui/react';
+import { useGetPostFromURL } from '../../utils/hooks/useGetPostFromURL';
+import EditDeletePostButtons from '../../components/EditDeletePostButtons';
 
 const Post = () => {
-  const router = useRouter();
-  const invalidURLParam = typeof router.query.id !== 'string';
-  const [postQuery] = usePostQuery({
-    pause: invalidURLParam,
-    variables: { id: Number(router.query.id) },
-  });
+  const { postOptions } = useGetPostFromURL();
+  const postQuery = postOptions[0];
 
-  if (postQuery.fetching) {
+  if (postQuery.fetching || !postQuery.data || !postQuery.data.post) {
     return <Layout>Loading posts...</Layout>
   }
 
   return (
     <Layout>
-      <Heading>{postQuery.data?.post?.title}</Heading>
+      <Flex>
+        <Heading>{postQuery.data.post.title}</Heading>
+        <EditDeletePostButtons id={postQuery.data.post.id} />
+      </Flex>
       {postQuery.data?.post?.text || 'none'}
     </Layout>
   );

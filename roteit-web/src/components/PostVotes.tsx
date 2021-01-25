@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import NextLink from 'next/link';
 import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 import { Box, Flex, Heading, IconButton, Link, Text } from '@chakra-ui/react';
-import { PostFragmentFragment, useVoteMutation } from '../generated/graphql';
+import { PostFragmentFragment, useMeQuery, useVoteMutation } from '../generated/graphql';
+import EditDeletePostButtons from './EditDeletePostButtons';
 
 interface Props {
   post: PostFragmentFragment;
@@ -13,6 +14,7 @@ type TLoading = 'up-loading' | 'down-loading' | 'no-loading';
 const PostVotes: React.FC<Props> = ({ post }) => {
   const [, vote] = useVoteMutation();
   const [loading, setLoading] = useState<TLoading>('no-loading');
+  const [meQuery] = useMeQuery();
 
   const handleVote = async (type: 'up' | 'down') => {
     const value = type === 'up' ? 1 : -1;
@@ -46,16 +48,20 @@ const PostVotes: React.FC<Props> = ({ post }) => {
           onClick={() => handleVote('down')}
         />
       </Flex>
-      <Box>
-        <Link>
-          <NextLink href={'/post/[id]'} as={`/post/${post.id}`}>
-            <Heading size="l">{post.title}</Heading>
-          </NextLink>
-        </Link>
-          by
-          {` ${post.postAuthor.username}`}
-        <Text size="m">{post.textSnippet}...</Text>
-      </Box>
+      <Flex flex="1">
+        <Box>
+          <Link>
+            <NextLink href={'/post/[id]'} as={`/post/${post.id}`}>
+              <Heading size="l">{post.title}</Heading>
+            </NextLink>
+          </Link>
+            by
+            {` ${post.postAuthor.username}`}
+            <Text flex="1" size="m">{post.textSnippet}...</Text>
+        </Box>
+
+        {meQuery.data?.me?.id === post.postAuthor.id ? <EditDeletePostButtons id={post.id} /> : null}
+      </Flex>
     </Flex>
   );
 };

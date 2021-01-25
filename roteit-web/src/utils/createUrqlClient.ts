@@ -3,7 +3,7 @@ import { dedupExchange, fetchExchange, Exchange, stringifyVariables } from 'urql
 import { pipe, tap } from 'wonka';
 import Router from 'next/router';
 import gql from 'graphql-tag';
-import { LogoutMutation, MeDocument, MeQuery, VoteMutationVariables } from '../generated/graphql';
+import { DeletePostMutationVariables, LogoutMutation, MeDocument, MeQuery, VoteMutationVariables } from '../generated/graphql';
 import { updateQuery } from './updateQuery';
 import { loginPath } from '../paths';
 
@@ -123,7 +123,10 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
                 }
               `, { points: updatedPoints, id: postId, voteStatus: value });
             }
-          }
+          },
+          deletePost: (_result, args, cache, info) => {
+            cache.invalidate({ __typename: 'Post', id: (args as DeletePostMutationVariables).id });
+          },
         },
       },
     }),

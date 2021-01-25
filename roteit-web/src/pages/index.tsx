@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { withUrqlClient } from 'next-urql';
-import { Box, Button, Flex, Heading, Link, Stack, Text } from '@chakra-ui/react';
-import { ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
-import NextLink from 'next/link';
+import { Button, Flex, Stack, Text } from '@chakra-ui/react';
 import { createUrqlClient } from '../utils/createUrqlClient';
 import { usePaginatedPostsQuery } from '../generated/graphql';
 import Layout from '../components/Layout';
-import { createPostPath } from '../paths';
 import PostVotes from '../components/PostVotes';
 
 const Index = () => {
@@ -19,13 +16,11 @@ const Index = () => {
     postContent = <Text>Could not load posts. Try refreshing :(</Text>;
   }
 
-  postContent = (fetching && !data ) ?
+  postContent = (fetching && !data) ?
     (<div>Loading</div>) :
     (
       <Stack spacing={10}>
-        {!data?.posts.posts.length ? null : data.posts.posts.map((post) => (
-          <PostVotes post={post} key={post.id} />
-        ))}
+        {!data?.posts.posts.length ? null : data.posts.posts.map((post) => (post ? <PostVotes post={post} key={post.id} /> : null))}
       </Stack>
     );
 
@@ -39,7 +34,7 @@ const Index = () => {
               <Button
                 isLoading={fetching}
                 border="1px"
-                onClick={() => setCursor(data?.posts.posts.[data?.posts.posts.length - 1].createdAt)}
+                onClick={() => setCursor(data?.posts.posts[data?.posts.posts.length - 1].createdAt)}
               >
                 Load More
               </Button>
