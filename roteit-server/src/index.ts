@@ -12,7 +12,6 @@ import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
 import { LOCAL_DEV_ROUTE, prod, SESSION_COOKIE } from './constants';
 import { typeormConfig } from './typeormConfig';
-import { Post } from './entities/Post';
 import { createUserDataLoader, createUpvoteDataLoader } from './utils/dataloaders';
 
 const main = async () => {
@@ -20,8 +19,6 @@ const main = async () => {
   const conn = await createConnection(typeormConfig);
   await conn.runMigrations();
   
-  // await Post.delete({ });
-
   // Create Express app, to connect to Graphql
   const app = express();
   app.listen(4000, () => {
