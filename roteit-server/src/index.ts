@@ -32,7 +32,7 @@ const main = async () => {
   const redisClient = redis.createClient(getRedisConfig());
 
   // Accept CORS on requests, and set proxy in case prod environment needs it
-  app.set('proxy', 1)
+  app.set('trust proxy', 1)
   const CORS_SETTINGS = {
     origin: process.env.CORS_ORIGIN,
     credentials: true,
