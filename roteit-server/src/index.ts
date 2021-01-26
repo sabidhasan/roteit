@@ -54,7 +54,7 @@ const main = async () => {
       // HTTPS cookies only for prod environment, as localhost has no HTTPS by default
       secure: prod,
       // CSRF
-      sameSite: 'lax',
+      sameSite: 'none',
     }
   }));
 
