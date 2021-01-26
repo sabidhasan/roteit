@@ -1,4 +1,7 @@
 # RoteIt
+[Deployed](https://roteit.vercel.app/) on Vercel/Heroku! Tested as of Jan 2021.
+
+# Background
 > **RoteIt** is a small [HackerNews](https://news.ycombinator.com/)-inspired website that allows users to post and vote on text-only posts
 
 Based on Ben Awad's [Fullstack React GraphQL TypeScript Tutorial](https://www.youtube.com/watch?v=I6ypD7qv3Z8), but the code differs somewhat from his finished product, as I have used his tutorial as a code-along guide, rather than aiming to have code/feature-parity.
