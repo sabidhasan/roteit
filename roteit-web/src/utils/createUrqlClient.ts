@@ -75,7 +75,7 @@ const invalidateAllPosts = (cache: Cache) => {
 
 // Creates URQL client using withUrqlClient
 export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
-  url: process.env.NEXT_PUBLIC_BACKEND_URL,
+  url: process.env.NEXT_PUBLIC_BACKEND_URL as string,
   fetchOptions: {
     credentials: 'include' as const,
     // Pass on the cookie for SSR onto GQL server
