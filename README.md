@@ -139,12 +139,20 @@ Check the logs from the running app (Heroku GUI can be used for this, as well), 
 heroku logs --tail
 ```
 
-## Frontend
-To do... We may need to use a different approach than using the Subdir Heroku buildpack, because that probably only supports one subdirectory.
+Alternatively, a deploy can be triggered from the Heroku GUI.
 
-# To Do
-- Set up front end server using Vercel or Heroku
-- Containerize everything via Docker
+## Frontend
+Deploy the front end using Vercel. As of this writing, Vercel struggles with deploying the app because the root directory of this project is not a NextJS app. To get around this, use the following to depoy:
+- Delete the existing app using the GUI (https://vercel.com)
+- Create a new app on the GUI called `roteit` (name doesn't matter though)
+- Select NextJS as the app type, this repository as the repo, and the `roteit-web` directory as the root folder
+- Set environment variables (`NEXT_PUBLIC_BACKEND_URL`, which should point to the public URL of `https://roteit.herokuapp.com/graphql`)
+- Click Deploy and wait until the app is deployed
+
+# To Do/Issues
+- Container-ize everything via Docker
+- Currently, we are setting the `same-site` attribute to `none` on the API - this should be changed to something more secure for CSRF...
+- Add tests....
 
 # Contributing
 ## Server Side Rendering
