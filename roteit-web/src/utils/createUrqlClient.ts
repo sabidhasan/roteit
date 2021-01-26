@@ -1,4 +1,4 @@
-import { cacheExchange, Resolver } from '@urql/exchange-graphcache';
+import { Cache, cacheExchange, Resolver } from '@urql/exchange-graphcache';
 import { dedupExchange, fetchExchange, Exchange, stringifyVariables } from 'urql';
 import { pipe, tap } from 'wonka';
 import Router from 'next/router';
@@ -64,6 +64,15 @@ const cursorBasedPaginationExchange = (): Resolver => {
   };
 };
 
+const invalidateAllPosts = (cache: Cache) => {
+  // Invalidate post cache
+  const allFields = cache.inspectFields('Query');
+  const fieldInfos = allFields.filter((f) => f.fieldName === 'posts');
+  fieldInfos.forEach((fieldInfo) => {
+    cache.invalidate('Query', 'posts', fieldInfo.arguments || {});
+  });
+};
+
 // Creates URQL client using withUrqlClient
 export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
   url: 'http://localhost:4000/graphql',
@@ -95,15 +104,10 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
             );
           },
           createPost: (_result, args, cache, info) => {
-            // Invalidate post cache
-            const allFields = cache.inspectFields('Query');
-            const fieldInfos = allFields.filter((f) => f.fieldName === 'posts');
-            fieldInfos.forEach((fieldInfo) => {
-              cache.invalidate('Query', 'posts', fieldInfo.arguments || {});
-            });
+            invalidateAllPosts(cache);
           },
           vote: (_result, args, cache, info) => {
-            // 
+            // Update the voteStatus in the cache
             const { postId, value } = args as VoteMutationVariables;
             const data: any = cache.readFragment(gql`
               fragment _ on Post {
@@ -127,6 +131,9 @@ export const createUrqlClient = (ssrExchange: any, ctx: any) => ({
           deletePost: (_result, args, cache, info) => {
             cache.invalidate({ __typename: 'Post', id: (args as DeletePostMutationVariables).id });
           },
+          login: (_result, args, cache, info) => {
+            invalidateAllPosts(cache);
+          }
         },
       },
     }),

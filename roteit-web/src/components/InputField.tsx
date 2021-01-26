@@ -5,7 +5,7 @@ import { FormControl, FormErrorMessage, FormLabel, Input, Textarea } from '@chak
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   label: string;
-  type?: 'textarea' | 'inputbox'
+  type?: 'textarea' | 'inputbox' | 'password';
 }
 
 const InputField: React.FC<Props> = ({ label, size, type='inputbox', ...props }) => {
@@ -28,6 +28,7 @@ const InputField: React.FC<Props> = ({ label, size, type='inputbox', ...props })
             {...field}
             {...props}
             id={field.name}
+            type={type}
             placeholder={props.placeholder}
             borderColor="sandybrown"
             focusBorderColor="darkbrown"

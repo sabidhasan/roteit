@@ -1,11 +1,13 @@
 import React from 'react';
 import { Box, Button, Flex, Heading, Link, Divider } from '@chakra-ui/react';
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 import { createPostPath, homePath, loginPath, registerPath } from '../paths';
 import { isClientSide } from '../utils/isClientSide';
 import { useMeQuery, useLogoutMutation } from '../generated/graphql'
 
 export const Navbar: React.FC<{}> = () => {
+  const router = useRouter();
   const [{ fetching, data }] = useMeQuery({
     requestPolicy: 'network-only',
     pause: !isClientSide(),
@@ -25,7 +27,10 @@ export const Navbar: React.FC<{}> = () => {
         <Box marginRight={5}>{data.me.username}</Box>
         <Button
           variant="link"
-          onClick={() => logout()}
+          onClick={async () => {
+            await logout();
+            router.reload()
+          }}
           isLoading={logoutFetching}
         >
           Log Out
