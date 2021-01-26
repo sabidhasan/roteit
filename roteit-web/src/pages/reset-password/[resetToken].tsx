@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { NextPage, GetStaticProps } from 'next';
 import NextLink from 'next/link';
 import { Box, Button, Link } from '@chakra-ui/react';
 import { Formik, Form } from 'formik';
@@ -12,11 +11,7 @@ import { parseGQLErrors } from '../../utils/parseGQLErrors';
 import { useUpdatePasswordMutation } from '../../generated/graphql';
 import { createUrqlClient } from '../../utils/createUrqlClient';
 
-// interface Props {
-//   resetToken: string;
-// }
-
-const ResetPassword: NextPage = () => {
+const ResetPassword: React.FC = () => {
   const [, updatePassword] = useUpdatePasswordMutation();
   const router = useRouter();
   const [tokenError, setTokenError] = useState('');

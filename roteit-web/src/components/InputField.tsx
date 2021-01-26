@@ -5,7 +5,7 @@ import { FormControl, FormErrorMessage, FormLabel, Input, Textarea } from '@chak
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   name: string;
   label: string;
-  type?: 'textarea' | 'inputbox' | 'password';
+  type?: 'textarea' | 'inputbox' | 'password' | 'email';
 }
 
 const InputField: React.FC<Props> = ({ label, size, type='inputbox', ...props }) => {

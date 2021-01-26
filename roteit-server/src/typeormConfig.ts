@@ -10,7 +10,7 @@ export const typeormConfig: ConnectionOptions = {
   url: process.env.DATABASE_URL,
   migrations: [path.join(__dirname, './migrations/*')],
   // Synchronize will auto-sync DB schemas, which is bad in prod
-  synchronize: !prod,
+  synchronize: false,
   logging: !prod,
   entities: [Post, User, Upvote],
 };
